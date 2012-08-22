@@ -39,7 +39,7 @@ sim_neutral = function(n, sample_size, rel_abunds)
   return(data_out)
 }
 
-inter_mat = function(y)
+inter = function(y)
 {
   # Return a matrix of effective interaction terms between
   # species.
@@ -63,9 +63,31 @@ rel_abunds = function(y)
   return(col_totals / grand_total)
 }
 
-
-
-
+sample_neutral = function(n, reps, sample_size, rel_abunds)
+{
+  # Return a list of 3D matrices of stacked
+  # interaction/covariance/correlation, matrices from a zero
+  # interaction neutral model of community assembly
+  # (see sim_neutral).  *n* is the number of interaction matrices
+  # to sample, *reps* is the number of independent replicates to
+  # pull in calculating each neutral interaction matrix,
+  # *sample_size* is the number of individuals to count in each
+  # replicate, and *rel_abunds* is the expected relative abundance
+  # of each species.
+  species = length(rel_abunds)
+  interaction = array(0, dim = c(species, species, n))
+  spearman = array(0, dim = c(species, species, n))
+  kendall = array(0, dim = c(species, species, n))
+  for (i in 1:n)
+  {
+    simulation = sim_neutral(reps, sample_size, rel_abunds)
+    interaction[,,i] = inter(simulation)
+    spearman[,,i] = cor(simulation, method = "spearman")
+    kendall[,,i] = cor(simulation, method = "kendall")
+  }
+  return(list(interaction = interaction, spearman = spearman,
+              kendall = kendall))
+}
 
 
 
