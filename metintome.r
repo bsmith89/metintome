@@ -22,15 +22,15 @@ sample2 = function(n, rel_abunds)
   return(sample)
 }
 
-sim_neutral = function(n, sample_size, rel_abunds)
+sim_neutral = function(reps, sample_size, rel_abunds)
 {
   if (length(sample_size) == 1)
   {
-    sample_size = array(sample_size, n)
+    sample_size = array(sample_size, reps)
   }
-  data_out = matrix(0, nrow = n,
+  data_out = matrix(0, nrow = reps,
                     ncol = length(rel_abunds))
-  for (i in 1:n)
+  for (i in 1:reps)
   {
     data_out[i,] = tabulate(sample2(sample_size[i],
                                     rel_abunds))
@@ -74,6 +74,10 @@ sample_neutral = function(n, reps, sample_size, rel_abunds)
   # *sample_size* is the number of individuals to count in each
   # replicate, and *rel_abunds* is the expected relative abundance
   # of each species.
+  if (length(sample_size) == 1)
+  {
+    sample_size = array(sample_size, dim=c(reps))
+  }
   species = length(rel_abunds)
   interaction = array(0, dim = c(species, species, n))
   spearman = array(0, dim = c(species, species, n))
@@ -89,9 +93,77 @@ sample_neutral = function(n, reps, sample_size, rel_abunds)
               kendall = kendall))
 }
 
-sample50 = sample_neutral(300, 50, 1000,
-                          c(0.1, 0.1, 0.1, 0.1,
-                            0.25, 0.25, 0.05, 0.05))
-sample100 = sample_neutral(300, 100, 1000,
-                           c(0.1, 0.1, 0.1, 0.1,
-                             0.25, 0.25, 0.05, 0.05))
+interactions = function(y, simulated_data = NULL,
+                        n = 300, assign_intra = T)
+{
+  # Takes an abundance matrix *y* and returns percentiles on all
+  # interaction metrics.
+  if (is.null(simulated_data))
+  {
+    reps = nrow(y)
+    sample_size = apply(y, c(1), sum)
+    obs_rel_abunds = rel_abunds(y)
+    species = length(obs_rel_abunds)
+    obs_spearman = cor(y, method = "spearman")
+    obs_kendall = cor(y, method = "kendall")
+    obs_interaction = inter(y)
+    simulated_data = sample_neutral(n, reps, sample_size,
+                                    obs_rel_abunds)
+  }
+  percentile_spearman = array(0, dim=c(species, species))
+  percentile_kendall = array(0, dim=c(species, species))
+  percentile_interaction = array(0, dim=c(species, species))
+  for (i in 1:species)
+  {
+    for (j in 1:species)
+    {
+      if (i == j)
+      {
+          if (assign_intra == T)
+          {
+            percentile_spearman[i,j] = 0.5
+            percentile_kendall[i,j] = 0.5
+            percentile_interaction[i,j] = 0.5
+          }
+          else
+          {
+            percentile_spearman[i,j] = NA
+            percentile_kendall[i,j] = NA
+            percentile_interaction[i,j] = NA
+          }
+          next
+      }
+      percentile_spearman[i,j] = 
+        ecdf(simulated_data$spearman[i,j,])(obs_spearman[i,j])
+      percentile_kendall[i,j] = 
+        ecdf(simulated_data$kendall[i,j,])(obs_kendall[i,j])
+      percentile_interaction[i,j] = 
+        ecdf(simulated_data$interaction[i,j,])(obs_interaction[i,j])
+    }
+  }
+  return(list(spearman = percentile_spearman,
+              kendall = percentile_kendall,
+              interaction = percentile_interaction,
+              simulated_data = simulated_data))
+}
+
+obs = sim_neutral(100, sample_size = 1000,
+                  rel_abunds = c(0.1, 0.1, 0.1, 0.1, 
+                                 0.25, 0.25, 0.05, 0.05))
+
+interaction_results = interactions(obs, n = 300)
+
+# sample50_1000 = sample_neutral(300, 50, 1000,
+#                           c(0.1, 0.1, 0.1, 0.1,
+#                             0.25, 0.25, 0.05, 0.05))
+# sample100_1000 = sample_neutral(300, 100, 1000,
+#                            c(0.1, 0.1, 0.1, 0.1,
+#                              0.25, 0.25, 0.05, 0.05))
+# sample50_2000 = sample_neutral(300, 50, 2000,
+#                                c(0.1, 0.1, 0.1, 0.1, 
+#                                  0.25, 0.25, 0.05, 0.05))
+# 
+# par(mfrow=c(3,1))
+# hist(sample50_1000$spearman[1,2,], xlim = c(-0.6, 0.3))
+# hist(sample50_2000$spearman[1,2,], xlim = c(-0.6, 0.3))
+# hist(sample100_1000$spearman[1,2,], xlim = c(-0.6, 0.3))
