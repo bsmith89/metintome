@@ -89,48 +89,9 @@ sample_neutral = function(n, reps, sample_size, rel_abunds)
               kendall = kendall))
 }
 
-
-
-
-
-
-
-
-ab_corr_obs50_1000 = NULL
-for (rep in 1:300)
-{
-  ab_corr_obs50_1000 = c(ab_corr_obs50_1000,
-                  cor(sim_neutral(50, 1000, 
-                                  c(0.05, 0.3, 0.2,
-                                    0.05, 0.05, 0.35)),
-                      method = "spearman")[1,2])
-}
-hist(ab_corr_obs50_1000)
-qqnorm(ab_corr_obs50_1000)
-qqline(ab_corr_obs50_1000)
-
-ab_corr_obs10_1000 = NULL
-for (rep in 1:300)
-{
-  ab_corr_obs10_1000 = c(ab_corr_obs10_1000,
-                  cor(sim_neutral(10, 1000, 
-                                  c(0.05, 0.3, 0.2,
-                                    0.05, 0.05, 0.35)),
-                      method = "spearman")[1,2])
-}
-hist(ab_corr_obs10_1000)
-qqnorm(ab_corr_obs10_1000)
-qqline(ab_corr_obs10_1000)
-
-ab_corr_obs10_500 = NULL
-for (rep in 1:300)
-{
-  ab_corr_obs10_500 = c(ab_corr_obs10_500,
-                  cor(sim_neutral(10, 500, 
-                                  c(0.05, 0.3, 0.2,
-                                    0.05, 0.05, 0.35)),
-                      method = "spearman")[1,2])
-}
-hist(ab_corr_obs10_500)
-qqnorm(ab_corr_obs10_500)
-qqline(ab_corr_obs10_500)
+sample50 = sample_neutral(300, 50, 1000,
+                          c(0.1, 0.1, 0.1, 0.1,
+                            0.25, 0.25, 0.05, 0.05))
+sample100 = sample_neutral(300, 100, 1000,
+                           c(0.1, 0.1, 0.1, 0.1,
+                             0.25, 0.25, 0.05, 0.05))
