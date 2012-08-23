@@ -1,3 +1,5 @@
+library(gplots)
+
 sample2 = function(n, rel_abunds)
 {
   # Returns a list of counts in a random sample of a
@@ -43,7 +45,8 @@ inter = function(y)
 {
   # Return a matrix of effective interaction terms between
   # species.
-  return(-(1 / cor(y)))
+  return(-(1 / cov(y)))
+  # return(cov(y))
 }
 
 mean_rel_abunds = function(y)
@@ -98,15 +101,15 @@ interactions = function(y, simulated_data = NULL,
 {
   # Takes an abundance matrix *y* and returns percentiles on all
   # interaction metrics.
+  reps = nrow(y)
+  sample_size = apply(y, c(1), sum)
+  obs_rel_abunds = rel_abunds(y)
+  species = length(obs_rel_abunds)
+  obs_spearman = cor(y, method = "spearman")
+  obs_kendall = cor(y, method = "kendall")
+  obs_interaction = inter(y)
   if (is.null(simulated_data))
   {
-    reps = nrow(y)
-    sample_size = apply(y, c(1), sum)
-    obs_rel_abunds = rel_abunds(y)
-    species = length(obs_rel_abunds)
-    obs_spearman = cor(y, method = "spearman")
-    obs_kendall = cor(y, method = "kendall")
-    obs_interaction = inter(y)
     simulated_data = sample_neutral(n, reps, sample_size,
                                     obs_rel_abunds)
   }
@@ -147,23 +150,28 @@ interactions = function(y, simulated_data = NULL,
               simulated_data = simulated_data))
 }
 
-obs = sim_neutral(100, sample_size = 1000,
-                  rel_abunds = c(0.1, 0.1, 0.1, 0.1, 
-                                 0.25, 0.25, 0.05, 0.05))
+percentile_heatmap = function(y)
+{
+  heatmap.2(y, dendrogram = 'none', symm = T,
+            breaks = c(0, 0.01, 0.025,
+                       seq(0.05, 0.95, 0.01),
+                       0.975, 0.99, 1),
+            col = redgreen, trace = 'none', density.info = 'none')
+}
 
-interaction_results = interactions(obs, n = 300)
+n = 300
+reps = 100
+sample_size = 1000
+true_rel_abunds = c(0.1, 0.1, 0.1, 0.1, 0.25, 0.25, 0.05, 0.05)
+simulated_data = sample_neutral(n, reps, sample_size, true_rel_abunds)
 
-# sample50_1000 = sample_neutral(300, 50, 1000,
-#                           c(0.1, 0.1, 0.1, 0.1,
-#                             0.25, 0.25, 0.05, 0.05))
-# sample100_1000 = sample_neutral(300, 100, 1000,
-#                            c(0.1, 0.1, 0.1, 0.1,
-#                              0.25, 0.25, 0.05, 0.05))
-# sample50_2000 = sample_neutral(300, 50, 2000,
-#                                c(0.1, 0.1, 0.1, 0.1, 
-#                                  0.25, 0.25, 0.05, 0.05))
-# 
-# par(mfrow=c(3,1))
-# hist(sample50_1000$spearman[1,2,], xlim = c(-0.6, 0.3))
-# hist(sample50_2000$spearman[1,2,], xlim = c(-0.6, 0.3))
-# hist(sample100_1000$spearman[1,2,], xlim = c(-0.6, 0.3))
+for (i in 1:1)
+{
+  obs = sim_neutral(100, sample_size = 1000,
+                    rel_abunds = true_rel_abunds)
+  interaction_results = interactions(obs, simulated_data = simulated_data)
+  par(mfrow = c(2,2))
+  percentile_heatmap(interaction_results$spearman)
+  percentile_heatmap(interaction_results$kendall)
+  percentile_heatmap(interaction_results$interaction)
+}
