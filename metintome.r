@@ -1,45 +1,28 @@
 library(gplots)
 
-sample2 = function(n, rel_abunds)
-{
-  # Returns a list of counts in a random sample of a
-  # population with relative abundances for species i given
-  # in rel_abunds[i]
-  sample = NULL
-  rand = runif(n)
-  for (i in 1:n)
-  {
-    r = rand[i]
-    pointer = 0
-    for (j in 1:length(rel_abunds))
-    {
-      pointer = pointer + rel_abunds[j]
-      if (r < pointer)
-      {
-        sample = c(sample, j)
-        break
-      }
-    }
-  }
-  return(sample)
-}
-
 sim_neutral = function(reps, sample_size, rel_abunds)
 {
+  names = names(rel_abunds)
+  species = length(names)
   if (length(sample_size) == 1)
   {
     sample_size = array(sample_size, reps)
   }
-  data_out = matrix(0, nrow = reps,
-                    ncol = length(rel_abunds))
+  data_out = array(0, dim = c(reps, length(rel_abunds)),
+                   dimnames = list(1:reps, names))
   for (i in 1:reps)
   {
-    data_out[i,] = tabulate(sample2(sample_size[i],
-                                    rel_abunds))
+    counts = tabulate(sample(1:species,
+                             prob = rel_abunds,
+                             size = sample_size,
+                             replace = T),
+                      nbins = species)
+    data_out[i,] = counts
   }
   data_out = data.frame(data_out)
   return(data_out)
 }
+
 
 inter = function(y)
 {
@@ -82,21 +65,25 @@ sample_neutral = function(n, reps, sample_size, rel_abunds)
     sample_size = array(sample_size, dim=c(reps))
   }
   species = length(rel_abunds)
-  interaction = array(0, dim = c(species, species, n))
-  spearman = array(0, dim = c(species, species, n))
-  kendall = array(0, dim = c(species, species, n))
+  names = names(rel_abunds)
+  dimnames = list(names, names)
+  interaction = array(0, dim = c(species, species, n), dimnames = dimnames)
+  spearman = array(0, dim = c(species, species, n), dimnames = dimnames)
+  kendall = array(0, dim = c(species, species, n), dimnames = dimnames)
+  covar = array(0, dim = c(species, species, n), dimnames = dimnames)
   for (i in 1:n)
   {
     simulation = sim_neutral(reps, sample_size, rel_abunds)
     interaction[,,i] = inter(simulation)
     spearman[,,i] = cor(simulation, method = "spearman")
     kendall[,,i] = cor(simulation, method = "kendall")
+    covar[,,i] = cov(simulation)
   }
-  return(list(interaction = interaction, spearman = spearman,
-              kendall = kendall))
+  return(list(inter = interaction, spearman = spearman,
+              kendall = kendall, cov = covar))
 }
 
-interactions = function(y, simulated_data = NULL,
+analyze = function(y, sim_data = NULL,
                         n = 300, assign_intra = T)
 {
   # Takes an abundance matrix *y* and returns percentiles on all
@@ -107,15 +94,22 @@ interactions = function(y, simulated_data = NULL,
   species = length(obs_rel_abunds)
   obs_spearman = cor(y, method = "spearman")
   obs_kendall = cor(y, method = "kendall")
-  obs_interaction = inter(y)
-  if (is.null(simulated_data))
+  obs_inter = inter(y)
+  obs_cov = cov(y)
+  if (is.null(sim_data))
   {
-    simulated_data = sample_neutral(n, reps, sample_size,
-                                    obs_rel_abunds)
+    sim_data = sample_neutral(n, reps, sample_size,
+                              obs_rel_abunds)
   }
-  percentile_spearman = array(0, dim=c(species, species))
-  percentile_kendall = array(0, dim=c(species, species))
-  percentile_interaction = array(0, dim=c(species, species))
+  dimnames = list(names(y), names(y))
+  percentile_spearman = array(0, dim=c(species, species),
+                              dimnames = dimnames)
+  percentile_kendall = array(0, dim=c(species, species),
+                             dimnames = dimnames)
+  percentile_inter = array(0, dim=c(species, species),
+                              dimnames = dimnames)
+  percentile_cov = array(0, dim=c(species, species),
+                              dimnames = dimnames)
   for (i in 1:species)
   {
     for (j in 1:species)
@@ -126,52 +120,58 @@ interactions = function(y, simulated_data = NULL,
           {
             percentile_spearman[i,j] = 0.5
             percentile_kendall[i,j] = 0.5
-            percentile_interaction[i,j] = 0.5
+            percentile_inter[i,j] = 0.5
+            percentile_cov[i,j] = 0.5
           }
           else
           {
             percentile_spearman[i,j] = NA
             percentile_kendall[i,j] = NA
-            percentile_interaction[i,j] = NA
+            percentile_inter[i,j] = NA
+            percentile_cov[i,j] = NA
           }
           next
       }
       percentile_spearman[i,j] = 
-        ecdf(simulated_data$spearman[i,j,])(obs_spearman[i,j])
+        ecdf(sim_data$spearman[i,j,])(obs_spearman[i,j])
       percentile_kendall[i,j] = 
-        ecdf(simulated_data$kendall[i,j,])(obs_kendall[i,j])
-      percentile_interaction[i,j] = 
-        ecdf(simulated_data$interaction[i,j,])(obs_interaction[i,j])
+        ecdf(sim_data$kendall[i,j,])(obs_kendall[i,j])
+      percentile_inter[i,j] = 
+        ecdf(sim_data$inter[i,j,])(obs_inter[i,j])
+      percentile_cov[i,j] = 
+        ecdf(sim_data$cov[i,j,])(obs_cov[i,j])
     }
   }
-  return(list(spearman = percentile_spearman,
-              kendall = percentile_kendall,
-              interaction = percentile_interaction,
-              simulated_data = simulated_data))
+  return(list(sim_data = sim_data,
+              observed = list(spearman = obs_spearman,
+                              kendall = obs_kendall,
+                              cov = obs_cov,
+                              inter = obs_inter),
+              percentile = list(spearman = percentile_spearman,
+                                 kendall = percentile_kendall,
+                                 inter = percentile_inter,
+                                 cov = percentile_cov)))
 }
 
-percentile_heatmap = function(y)
+percentile_heatmap = function(y, cutoff = 0.025)
 {
-  heatmap.2(y, dendrogram = 'none', symm = T,
+  sign = array(NA, dim = c(nrow(y), ncol(y)))
+  sign[which(y < cutoff | y > 1 - cutoff)] = '*'
+  heatmap.2(y, Rowv = T, dendrogram = 'none', symm = T,
             breaks = c(0, 0.01, 0.025,
                        seq(0.05, 0.95, 0.01),
                        0.975, 0.99, 1),
-            col = redgreen, trace = 'none', density.info = 'none')
+            col = redgreen, trace = 'none', density.info = 'none',
+            cellnote = sign, notecol = 'black')
 }
 
-n = 300
-reps = 100
-sample_size = 1000
-true_rel_abunds = c(0.1, 0.1, 0.1, 0.1, 0.25, 0.25, 0.05, 0.05)
-simulated_data = sample_neutral(n, reps, sample_size, true_rel_abunds)
-
-for (i in 1:1)
-{
-  obs = sim_neutral(100, sample_size = 1000,
-                    rel_abunds = true_rel_abunds)
-  interaction_results = interactions(obs, simulated_data = simulated_data)
-  par(mfrow = c(2,2))
-  percentile_heatmap(interaction_results$spearman)
-  percentile_heatmap(interaction_results$kendall)
-  percentile_heatmap(interaction_results$interaction)
-}
+# n = 300
+# reps = 100
+# sample_size = 1000
+# species = 20
+# true_rel_abunds = array(1 / species, dim = c(species))
+# obs = sim_neutral(reps, sample_size = sample_size,
+#                   rel_abunds = true_rel_abunds)
+# interaction_results = interactions(obs, n = n, assign_intra = F)
+# percentile_heatmap(interaction_results$cov)
+# percentile_heatmap(interaction_results$kendall)
