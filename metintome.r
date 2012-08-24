@@ -105,3 +105,14 @@ percentile = function(obs, pop){
   }
   return(out_mat)
 }
+
+percentile_heatmap = function(mat, cutoff = 0.01){
+  signif = array(NA, dim = dim(mat))
+  signif[which(mat < cutoff | mat > 1 - cutoff)] = '*'
+  heatmap.2(mat, Rowv = T, dendrogram = 'none', symm = T,
+            breaks = c(0, 0.1, 0.025,
+                       seq(0.05, 0.95, 0.01),
+                       0.975, 0.99, 1),
+            col = redgreen, trace = 'none', density.info = 'none',
+            cellnote = signif, notecol = 'black')
+}
