@@ -1,177 +1,107 @@
 library(gplots)
 
-sim_neutral = function(reps, sample_size, rel_abunds)
-{
-  names = names(rel_abunds)
-  species = length(names)
-  if (length(sample_size) == 1)
-  {
-    sample_size = array(sample_size, reps)
+namespecies = function(x, replace = F){
+  if (! is.null(names(x)) && ! replace){
+    # Do nothing
+    return(x)
   }
-  data_out = array(0, dim = c(reps, length(rel_abunds)),
-                   dimnames = list(1:reps, names))
-  for (i in 1:reps)
-  {
-    counts = tabulate(sample(1:species,
-                             prob = rel_abunds,
-                             size = sample_size,
-                             replace = T),
-                      nbins = species)
-    data_out[i,] = counts
+  else {
+    names(x) = paste("SP", 1:length(x), sep = '')
+    return(x)
   }
-  data_out = data.frame(data_out)
-  return(data_out)
 }
 
-
-inter = function(y)
-{
-  # Return a matrix of effective interaction terms between
-  # species.
-  return(-(1 / cov(y)))
-  # return(cov(y))
-}
-
-mean_rel_abunds = function(y)
-{
-  # Return the mean relative abundance where replicates are given
-  # equal weight regardless of sample-size.
-  totals = matrix(apply(y, c(1), sum),
-                  nrow = nrow(y), ncol = ncol(y), byrow = F)
-  rel_abunds = y / totals
-  return(apply(rel_abunds, c(2), mean))
-}
-
-rel_abunds = function(y)
-{
-  col_totals = apply(y, c(2), sum)
+# rxs stands for replicat X species (matrix)
+rel_abund = function(rxs_mat){
+  col_totals = apply(rxs_mat, c(2), sum)
   grand_total = sum(col_totals)
-  return(col_totals / grand_total)
+  rel_abunds = col_totals / grand_total
+  rel_abunds = namespecies(rel_abunds)
+  return(rel_abunds)
 }
 
-sample_neutral = function(n, reps, sample_size, rel_abunds)
-{
-  # Return a list of 3D matrices of stacked
-  # interaction/covariance/correlation, matrices from a zero
-  # interaction neutral model of community assembly
-  # (see sim_neutral).  *n* is the number of interaction matrices
-  # to sample, *reps* is the number of independent replicates to
-  # pull in calculating each neutral interaction matrix,
-  # *sample_size* is the number of individuals to count in each
-  # replicate, and *rel_abunds* is the expected relative abundance
-  # of each species.
-  if (length(sample_size) == 1)
-  {
-    sample_size = array(sample_size, dim=c(reps))
-  }
-  species = length(rel_abunds)
-  names = names(rel_abunds)
-  dimnames = list(names, names)
-  interaction = array(0, dim = c(species, species, n), dimnames = dimnames)
-  spearman = array(0, dim = c(species, species, n), dimnames = dimnames)
-  kendall = array(0, dim = c(species, species, n), dimnames = dimnames)
-  covar = array(0, dim = c(species, species, n), dimnames = dimnames)
-  for (i in 1:n)
-  {
-    simulation = sim_neutral(reps, sample_size, rel_abunds)
-    interaction[,,i] = inter(simulation)
-    spearman[,,i] = cor(simulation, method = "spearman")
-    kendall[,,i] = cor(simulation, method = "kendall")
-    covar[,,i] = cov(simulation)
-  }
-  return(list(inter = interaction, spearman = spearman,
-              kendall = kendall, cov = covar))
+sim_neut_1rep = function(sample_size, rel_abunds){
+  rel_abunds = namespecies(rel_abunds)
+  species = names(rel_abunds)
+  samp = factor(sample(names(rel_abunds), size = sample_size,
+                replace = T, prob = rel_abunds))
+  return(tabulate(samp, nbins = length(rel_abunds)))
 }
 
-analyze = function(y, sim_data = NULL,
-                        n = 300, assign_intra = T)
-{
-  # Takes an abundance matrix *y* and returns percentiles on all
-  # interaction metrics.
-  reps = nrow(y)
-  sample_size = apply(y, c(1), sum)
-  obs_rel_abunds = rel_abunds(y)
-  species = length(obs_rel_abunds)
-  obs_spearman = cor(y, method = "spearman")
-  obs_kendall = cor(y, method = "kendall")
-  obs_inter = inter(y)
-  obs_cov = cov(y)
-  if (is.null(sim_data))
-  {
-    sim_data = sample_neutral(n, reps, sample_size,
-                              obs_rel_abunds)
+sim_neut_1trial = function(reps, sample_size, rel_abunds){
+  rel_abunds = namespecies(rel_abunds)
+  num_species = length(rel_abunds)
+  species = names(rel_abunds)
+  if (length(sample_size) == 1){
+    sample_size = array(sample_size, dim = c(reps))
   }
-  dimnames = list(names(y), names(y))
-  percentile_spearman = array(0, dim=c(species, species),
-                              dimnames = dimnames)
-  percentile_kendall = array(0, dim=c(species, species),
-                             dimnames = dimnames)
-  percentile_inter = array(0, dim=c(species, species),
-                              dimnames = dimnames)
-  percentile_cov = array(0, dim=c(species, species),
-                              dimnames = dimnames)
-  for (i in 1:species)
-  {
-    for (j in 1:species)
-    {
-      if (i == j)
-      {
-          if (assign_intra == T)
-          {
-            percentile_spearman[i,j] = 0.5
-            percentile_kendall[i,j] = 0.5
-            percentile_inter[i,j] = 0.5
-            percentile_cov[i,j] = 0.5
-          }
-          else
-          {
-            percentile_spearman[i,j] = NA
-            percentile_kendall[i,j] = NA
-            percentile_inter[i,j] = NA
-            percentile_cov[i,j] = NA
-          }
-          next
-      }
-      percentile_spearman[i,j] = 
-        ecdf(sim_data$spearman[i,j,])(obs_spearman[i,j])
-      percentile_kendall[i,j] = 
-        ecdf(sim_data$kendall[i,j,])(obs_kendall[i,j])
-      percentile_inter[i,j] = 
-        ecdf(sim_data$inter[i,j,])(obs_inter[i,j])
-      percentile_cov[i,j] = 
-        ecdf(sim_data$cov[i,j,])(obs_cov[i,j])
+  out_mat = array(NA, dim = c(reps, num_species),
+                  dimnames = list(rep = 1:reps,
+                                  species = species))
+  for (rep in 1:reps){
+    out_mat[rep,] = sim_neut_1rep(sample_size[rep], rel_abunds)
+  }
+  return(out_mat)
+}
+
+sim_neut = function(trials, reps, sample_size, rel_abunds){
+  rel_abunds = namespecies(rel_abunds)
+  species = names(rel_abunds)
+  num_species = length(species)
+  out_mat = array(NA, dim = c(reps, num_species, trials),
+                  dimnames = list(rep = 1:reps,
+                                  species = species,
+                                  trial = 1:trials))
+  for (trial in 1:trials){
+    out_mat[,,trial] = sim_neut_1trial(reps, sample_size, rel_abunds)
+  }
+  return(out_mat)
+}
+
+inter_mat_1trial = function(rxs_mat, method = "spearman"){
+  # Return the covariance, correlation, or other interaction metric
+  # as a matrix.
+  if (method %in% c("pearson", "spearman", "kendall")){
+    return(cor(rxs_mat, method = method))
+  }
+  if (method %in% c("covar", "effint")){
+    covar = cov(rxs_mat)
+    ifelse(method == "effint", return(-1/covar), return(covar))
+  }
+  # Implement additional measures here by adding an
+  # if (method %in% ...) statement.
+  stop(simpleError(paste("Unrecognized method passed to measure:",
+                         method)))
+}
+
+inter_mat = function(rxs_mats, method = "spearman"){
+  num_reps = length(dimnames(rxs_mats)$rep)
+  species = dimnames(rxs_mats)$species
+  num_species = length(species)
+  trials = dimnames(rxs_mats)$trial
+  num_trials = length(trials)
+  out_mat = array(NA, dim = c(num_species, num_species, num_trials),
+                  dimnames = list(species = species,
+                                  species = species,
+                                  trial = trials))
+  for (trial in 1:num_trials){
+    out_mat[,,trial] = inter_mat_1trial(rxs_mats[,,trial],
+                                            method = method)
+  }
+  return(out_mat)
+}
+
+percentile = function(obs, pop){
+  species = dimnames(pop)$species
+  num_species = length(species)
+  out_mat = array(NA, dim = c(num_species, num_species),
+                  dimname = list(species = species,
+                                 species = species))
+  for (i in species){
+    for (j in species){
+      out_mat[i, j] = 
+        ecdf(pop[i, j,])(obs[i, j])
     }
   }
-  return(list(sim_data = sim_data,
-              observed = list(spearman = obs_spearman,
-                              kendall = obs_kendall,
-                              cov = obs_cov,
-                              inter = obs_inter),
-              percentile = list(spearman = percentile_spearman,
-                                 kendall = percentile_kendall,
-                                 inter = percentile_inter,
-                                 cov = percentile_cov)))
+  return(out_mat)
 }
-
-percentile_heatmap = function(y, cutoff = 0.025)
-{
-  sign = array(NA, dim = c(nrow(y), ncol(y)))
-  sign[which(y < cutoff | y > 1 - cutoff)] = '*'
-  heatmap.2(y, Rowv = T, dendrogram = 'none', symm = T,
-            breaks = c(0, 0.01, 0.025,
-                       seq(0.05, 0.95, 0.01),
-                       0.975, 0.99, 1),
-            col = redgreen, trace = 'none', density.info = 'none',
-            cellnote = sign, notecol = 'black')
-}
-
-# n = 300
-# reps = 100
-# sample_size = 1000
-# species = 20
-# true_rel_abunds = array(1 / species, dim = c(species))
-# obs = sim_neutral(reps, sample_size = sample_size,
-#                   rel_abunds = true_rel_abunds)
-# interaction_results = interactions(obs, n = n, assign_intra = F)
-# percentile_heatmap(interaction_results$cov)
-# percentile_heatmap(interaction_results$kendall)
