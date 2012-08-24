@@ -75,18 +75,22 @@ inter_mat_1trial = function(rxs_mat, method = "spearman"){
 }
 
 inter_mat = function(rxs_mats, method = "spearman"){
-  num_reps = length(dimnames(rxs_mats)$rep)
+  num_reps = dim(rxs_mats)[1]
+  num_species = dim(rxs_mats)[2]
+  num_trials = dim(rxs_mats)[3]
   species = dimnames(rxs_mats)$species
-  num_species = length(species)
-  trials = dimnames(rxs_mats)$trial
-  num_trials = length(trials)
+  
+  if (is.null(species)){
+    species = paste("SP", 1:num_species, sep = '')
+  }
+  
   out_mat = array(NA, dim = c(num_species, num_species, num_trials),
                   dimnames = list(species = species,
                                   species = species,
-                                  trial = trials))
+                                  trial = 1:num_trials))
   for (trial in 1:num_trials){
     out_mat[,,trial] = inter_mat_1trial(rxs_mats[,,trial],
-                                            method = method)
+                                        method = method)
   }
   return(out_mat)
 }
@@ -99,10 +103,17 @@ percentile = function(obs, pop){
                                  species = species))
   for (i in species){
     for (j in species){
-      out_mat[i, j] = 
-        ecdf(pop[i, j,])(obs[i, j])
+      sample = pop[i, j,]
+      if (all(is.na(sample))){
+        out_mat[i, j] = NA
+      }
+      else{
+        out_mat[i, j] = 
+          ecdf(pop[i, j,])(obs[i, j])
+      }
     }
   }
+  diag(out_mat) = NA
   return(out_mat)
 }
 
@@ -114,5 +125,18 @@ percentile_heatmap = function(mat, cutoff = 0.01){
                        seq(0.05, 0.95, 0.01),
                        0.975, 0.99, 1),
             col = redgreen, trace = 'none', density.info = 'none',
-            cellnote = signif, notecol = 'black')
+            cellnote = signif, notecol = 'black', keysize = 2)
+}
+
+subsample = function(rxs_mat, size){
+  reps = dim(rxs_mat)[1]
+  out_mat = array(NA, dim = dim(rxs_mat),
+                  dimnames = dimnames(rxs_mat))
+  for (rep in 1:reps){
+    counts = rxs_mat[rep,]
+    rel_abunds = counts / sum(counts)
+    out_mat[rep,] = sim_neut_1rep(sample_size = size,
+                                  rel_abunds = rel_abunds)
+  }
+  return(out_mat)
 }
