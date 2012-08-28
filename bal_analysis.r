@@ -6,6 +6,9 @@ source("metintome.r")
 data = read.csv("bal.csv", header = T, sep = ",")
 data = data[, -c(1:2)]
 data = data * 1000
+totals = apply(data, 2, sum)
+sorted_names = names(sort(totals, decreasing = T))
+data = data[, sorted_names]
 
 # # If I cut out all but the top 20 OTUs
 # data_20 = data[,1:20]
@@ -23,7 +26,6 @@ data = data * 1000
 
 
 
-totals = apply(data, 2, sum)
 data_all = data[, which(totals != 0)]
 
 obs_rxs = data_all
@@ -54,13 +56,51 @@ percentile_heatmap(comparison[1:100, 1:100],
 # degrees.  Groups of OTUs which are linked by a *large* fraction of
 # all possible chains are also obvious.  These quantitative
 # definitions of OTU clusters should be simple enough to evaluate from
-# a network matrix.  You could also potentially weight the edges of
-# the (undirected) graph by the percentile (relative to simulated,
+# a network matrix.  You could also potentially weight the edges of 
+# the (undirected) graph by the percentile (relative to simulated, 
 # neutral data) or actual strength of the interaction.
+
 # Some follow up questions that are worth asking: (1) Are OTUs which
 # are more phylogenetically related (based on 16S) more likely to be
-# clustered together as described above?  (2) Are phylogetically similar OTUs more likely to interact than not?  Positively or negatively.  The answers to many of these questions could be visualized by clustering OTUs based on their genetic distance in the heatmap.2 function, rather than by the default criteria.
-# I also want to consider the prodominance of positive interactions
-# relative to the neutral assumptions rather than negative interactions.
-# It's interesting that positive interactions could mean a few different things.  First the direct relationships between A and B which could result in a positive interaction:
-# (1) The first possibility, what we're most interested in, are mutalistic relationships, synergies, in which the presence of species A is beneficial to species B (and maybe vice-versa).  (2) Another possibility is that species A and B share environmental optima, so where we find A we expect to find B
+# clustered together as described above?  (2) Are phylogetically
+# similar OTUs more likely to interact than not?  Positively or
+# negatively.  The answers to many of these questions could be
+# visualized by clustering OTUs based on their genetic distance in the
+# heatmap.2 function, rather than by the default criteria. I also want
+# to consider the prodominance of positive interactions relative to
+# the neutral assumptions rather than negative interactions. It's
+# interesting that positive interactions could mean a few different
+# things.  There are direct relationships between species A and B
+# which could result in positive interaction scores: (1) What we're
+# most interested in, are mutalistic relationships, synergies, in
+# which the presence of species A is beneficial to species B (and
+# maybe vice-versa).  (2) Another possibility is that species A and B
+# share environmental optima, so where we find A we expect to find B. 
+# Indirectly: (3) a third species, C, could have a mutualistic
+# relationship with both A and B, thereby giving A and B an
+# interaction which is not directly based on their physiology.  (4+)
+# Just about any combination of environmental and mutualistic
+# relationships chaining A to B by one or more additional species
+# could give A and B a significant interaction score. This means that
+# given the existance of true interactions, blocks of >2 OTUs all of
+# which interact are not surprising, given that higher order, indirect
+# interactions, link all species to all other species.  This is not to
+# be expected from coincidental (false positive) correlations.
+
+# Another questions, however, is why we don't see more negative
+# interactions.  If species A and B both occupy the same niche,
+# shouldn't we expect their interaction score to be negative, or is
+# this canelled out by the positive interaction inherent in their
+# similar environmental optima? Interestingly, we do seem to have some
+# tenuous clusters of negatively interacting OTUs.  It may be
+# significant that we see these negative interactions between members
+# of two clusters of highly (positively) connected OTUs. Perhaps we're
+# seeing environmentally driven negative correlation, or maybe we're
+# seeing negative correlations between A and C, and B and C resulting
+# in positive correlations between A and B. I'd like to see a 
+# reclustering of the heat map where positive and negative 
+# interactions are clustered together.
+
+comparison_signless = abs(comparison - 0.5) + 0.5
+percentile_heatmap(comparison_signless[1:100, 1:100],
+                   cutoff1 = 0.005, cutoff2 = 0.001)

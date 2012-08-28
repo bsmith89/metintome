@@ -117,6 +117,17 @@ percentile = function(obs, pop){
   return(out_mat)
 }
 
+signless_dist = function(x, method = 'euclidian'){
+  unidirectional = abs(x - 0.5) + 0.5
+  return(dist(unidirectional, method = method))
+}
+
+binary_dist = function(x, cutoff = 0.01){
+  mat = array(0, dim = dim(x))
+  mat[x < cutoff | x > 1 - cutoff] = 1
+  return(dist(mat, method = 'binary'))
+}
+
 percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001){
   note = array(NA, dim = dim(mat))
   note[signif(mat, cutoff1)] = '.'
@@ -126,12 +137,16 @@ percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001){
              seq(0.99, 1, 0.0002))
   color_scheme = colorpanel(length(breaks) - 1,
                             'red', 'black', 'green')
-  heatmap.2(mat, Rowv = T, dendrogram = 'none', symm = T,
-            breaks = breaks,
-            col = color_scheme,
-            trace = 'none', density.info = 'none',
+  heatmap.2(mat,
+            Rowv = T, dendrogram = 'row', symm = T,
+            distfun = dist,
+            breaks = breaks, col = color_scheme,
+            trace = 'none', density.info = 'density',
             cellnote = note, notecol = 'black',
-            keysize = 1.5)
+            keysize = 1.5,
+            main = "Probability of Stronger
+Interaction Score Given No
+True Interaction (Neutral Model)")
 }
 
 lower_left = function(mat){
