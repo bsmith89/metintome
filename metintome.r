@@ -11,7 +11,7 @@ namespecies = function(x, replace = F){
   }
 }
 
-# rxs stands for replicat X species (matrix)
+# rxs stands for replicate-by-species (matrix)
 rel_abund = function(rxs_mat){
   col_totals = apply(rxs_mat, c(2), sum)
   grand_total = sum(col_totals)
@@ -117,15 +117,38 @@ percentile = function(obs, pop){
   return(out_mat)
 }
 
-percentile_heatmap = function(mat, cutoff = 0.01){
-  signif = array(NA, dim = dim(mat))
-  signif[which(mat < cutoff | mat > 1 - cutoff)] = '*'
-  heatmap.2(mat, Rowv = T, dendrogram = 'none', symm = T,
-            breaks = c(0, 0.1, 0.025,
-                       seq(0.05, 0.95, 0.01),
-                       0.975, 0.99, 1),
-            col = redgreen, trace = 'none', density.info = 'none',
-            cellnote = signif, notecol = 'black', keysize = 2)
+percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001){
+  note = array(NA, dim = dim(mat))
+  note[signif(mat, cutoff1)] = '.'
+  note[signif(mat, cutoff2)] = '*'
+  breaks = c(seq(0, 0.01, 0.0002),
+             seq(0.01, 0.99, 0.01),
+             seq(0.99, 1, 0.0002))
+  color_scheme = colorpanel(length(breaks) - 1,
+                            'red', 'black', 'green')
+  heatmap.2(mat, Rowv = F, dendrogram = 'none', symm = T,
+            breaks = breaks,
+            col = color_scheme,
+            trace = 'none', density.info = 'none',
+            cellnote = note, notecol = 'black',
+            keysize = 1.5)
+}
+
+lower_left = function(mat){
+  lower_left = array(NA, dim = dim(mat), dimnames = dimnames(mat))
+  lower_left[t(upper.tri(mat))] = mat[t(upper.tri(mat))]
+  return(lower_left)
+}
+
+perc_signif = function(mat, cutoff = 0.01){
+  total_comps = length(which(! is.na(mat)))
+  signif_comps =
+    length(which(significant(mat, cutoff) == T))
+  return(signif_comps / total_comps)
+}
+
+signif = function(mat, cutoff = 0.01){
+  mat < cutoff | mat > 1 - cutoff
 }
 
 subsample = function(rxs_mat, size){
