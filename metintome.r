@@ -126,7 +126,7 @@ percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001){
              seq(0.99, 1, 0.0002))
   color_scheme = colorpanel(length(breaks) - 1,
                             'red', 'black', 'green')
-  heatmap.2(mat, Rowv = F, dendrogram = 'none', symm = T,
+  heatmap.2(mat, Rowv = T, dendrogram = 'none', symm = T,
             breaks = breaks,
             col = color_scheme,
             trace = 'none', density.info = 'none',
