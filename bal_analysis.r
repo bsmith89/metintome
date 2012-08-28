@@ -37,3 +37,30 @@ neut_inter_mat_sample = inter_mat(neut_rxs_sample, method = method)
 comparison = percentile(obs_inter_mat, neut_inter_mat_sample)
 percentile_heatmap(comparison[1:100, 1:100],
                    cutoff1 = 0.005, cutoff2 = 0.001)
+
+# Pretty cool heatmap, eh?  If there's clustering turned on, you'll 
+# see that there exist ~2.5 clusters of OTUs which interact strongly 
+# with each other.  These groups show up as reciprocal positive or
+# negative interactions.  For instance, OTU A may interact 
+# significantly with B (which means vice-versa as well).  A cycle is 
+# formed if both A and B interact with a third OTU, C.  The existance 
+# of an OTU C which fulfills this description is not trivial.  Even 
+# less trivial would be a four OTU cycle, in which A and B are 
+# connected to each other at the 1º, 2º (by both C and D), and 3º (by
+# C through D) levels.  These graph structures are not expected from
+# the existance of false positives in our analysis. However, we see a
+# ton of them in our actual data.  In fact I see a cluster of 5 OTUs
+# which are linked by every possible connection of 1º through 4º 
+# degrees.  Groups of OTUs which are linked by a *large* fraction of
+# all possible chains are also obvious.  These quantitative
+# definitions of OTU clusters should be simple enough to evaluate from
+# a network matrix.  You could also potentially weight the edges of
+# the (undirected) graph by the percentile (relative to simulated,
+# neutral data) or actual strength of the interaction.
+# Some follow up questions that are worth asking: (1) Are OTUs which
+# are more phylogenetically related (based on 16S) more likely to be
+# clustered together as described above?  (2) Are phylogetically similar OTUs more likely to interact than not?  Positively or negatively.  The answers to many of these questions could be visualized by clustering OTUs based on their genetic distance in the heatmap.2 function, rather than by the default criteria.
+# I also want to consider the prodominance of positive interactions
+# relative to the neutral assumptions rather than negative interactions.
+# It's interesting that positive interactions could mean a few different things.  First the direct relationships between A and B which could result in a positive interaction:
+# (1) The first possibility, what we're most interested in, are mutalistic relationships, synergies, in which the presence of species A is beneficial to species B (and maybe vice-versa).  (2) Another possibility is that species A and B share environmental optima, so where we find A we expect to find B

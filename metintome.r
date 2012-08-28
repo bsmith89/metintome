@@ -122,7 +122,7 @@ percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001){
   note[signif(mat, cutoff1)] = '.'
   note[signif(mat, cutoff2)] = '*'
   breaks = c(seq(0, 0.01, 0.0002),
-             seq(0.01, 0.99, 0.01),
+             seq(0.02, 0.98, 0.01),
              seq(0.99, 1, 0.0002))
   color_scheme = colorpanel(length(breaks) - 1,
                             'red', 'black', 'green')
