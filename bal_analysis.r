@@ -104,3 +104,9 @@ percentile_heatmap(comparison[1:100, 1:100],
 comparison_signless = abs(comparison - 0.5) + 0.5
 percentile_heatmap(comparison_signless[1:100, 1:100],
                    cutoff1 = 0.005, cutoff2 = 0.001)
+
+neut_rxs = sim_neut_1trial(reps, sample_sizes, obs_rel_abunds)
+neut_inter_mat = inter_mat_1trial(neut_rxs, method = method)
+comparison_neutral = percentile(neut_inter_mat, neut_inter_mat_sample)
+percentile_heatmap(comparison_neutral[1:100, 1:100],
+                   cutoff1 = 0.005, cutoff2 = 0.001)
