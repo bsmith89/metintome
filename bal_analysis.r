@@ -3,7 +3,7 @@
 # a sample size of 1000.
 source("metintome.r")
 
-data = read.csv("bal.csv", header = T, sep = ",")
+data = read.csv("data/bal.csv", header = T, sep = ",")
 data = data[, -c(1:2)]
 data = data * 1000
 totals = apply(data, 2, sum)
