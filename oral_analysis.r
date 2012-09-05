@@ -3,17 +3,14 @@
 # a sample size of 1000.
 source("metintome.r")
 
-data = read.csv("data/bal.csv", header = T, sep = ",")
+data = read.csv("data/oral.csv", header = T, sep = ",")
 data = data[, -c(1:2)]
 data = data * 1000
 totals = apply(data, 2, sum)
 sorted_names = names(sort(totals, decreasing = T))
 data = data[, sorted_names]
-totals = apply(data, 2, sum) # This is important, since we've
-# re-arranged the data already.
+totals = apply(data, 2, sum)
 data_all = data[, which(totals != 0)]
-
-
 
 # # If I cut out all but the top 20 OTUs
 # data_20 = data[,1:20]
