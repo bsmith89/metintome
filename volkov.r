@@ -31,3 +31,12 @@ eim_sample = inter_mat(neut_rxs_sample_abundant,
                        method = 'effint')
 comparison = percentile(eim_obs, eim_sample)
 percentile_heatmap(comparison, 0.005, 0.001, cluster = F)
+
+# I am violating some of the assumptions layed out by Volkov et al. by
+# working with relative-abundance * 1000. This same issue makes my
+# covariance matrix singular, so I cannot invert it directly. Instead,
+# I've had to limit my analysis to just a "most abundant N" species. 
+# I'm running into the issue that my percentile scores are highly 
+# impacted by the number of species that I include in my analysis. 
+# Since I'm invalidating the assumptions, Volkov's measure is
+# unreasonable.
