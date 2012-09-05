@@ -1,3 +1,6 @@
+# A variety of methods for testing (and visualizing) interactions
+# between species in a microbiome.
+
 library(gplots)
 
 namespecies = function(x, replace = F){
@@ -66,7 +69,7 @@ inter_mat_1trial = function(rxs_mat, method = "spearman"){
   }
   if (method %in% c("covar", "effint")){
     covar = cov(rxs_mat)
-    ifelse(method == "effint", return(-1/covar), return(covar))
+    ifelse(method == "effint", return(-solve(covar)), return(covar))
   }
   # Implement additional measures here by adding an
   # if (method %in% ...) statement.
@@ -128,7 +131,7 @@ binary_dist = function(x, cutoff = 0.01){
   return(dist(mat, method = 'binary'))
 }
 
-percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001){
+percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001, cluster = T){
   note = array(NA, dim = dim(mat))
   note[signif(mat, cutoff1)] = '.'
   note[signif(mat, cutoff2)] = '*'
@@ -137,8 +140,16 @@ percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001){
              seq(0.99, 1, 0.0002))
   color_scheme = colorpanel(length(breaks) - 1,
                             'red', 'black', 'green')
+  if (cluster == T){
+    Rowv = T
+    dendrogram = 'row'
+  }
+  else {
+    Rowv = F
+    dendrogram = 'none'
+  }
   heatmap.2(mat,
-            Rowv = T, dendrogram = 'row', symm = T,
+            Rowv = Rowv, dendrogram = dendrogram, symm = T,
             distfun = dist,
             breaks = breaks, col = color_scheme,
             trace = 'none', density.info = 'density',

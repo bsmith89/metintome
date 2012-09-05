@@ -1,6 +1,7 @@
-# Interaction analysis of ling microbiome from non-smokers.
+# Interaction analysis of oral microbiome from non-smokers.
 # Values in data set are relative abundance of the given OTU from
 # a sample size of 1000.
+
 source("metintome.r")
 
 data = read.csv("data/oral.csv", header = T, sep = ",")
