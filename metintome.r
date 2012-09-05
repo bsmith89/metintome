@@ -2,6 +2,7 @@
 # between species in a microbiome.
 
 library(gplots)
+library(entropy)
 
 namespecies = function(x, replace = F){
   if (! is.null(names(x)) && ! replace){
@@ -71,6 +72,9 @@ inter_mat_1trial = function(rxs_mat, method = "spearman"){
     covar = cov(rxs_mat)
     ifelse(method == "effint", return(-solve(covar)), return(covar))
   }
+  if (method == "mutinfo"){
+    return(mi.Dirichlet(rxs_mat, a = 0))
+  }
   # Implement additional measures here by adding an
   # if (method %in% ...) statement.
   stop(simpleError(paste("Unrecognized method passed to measure:",
@@ -131,7 +135,9 @@ binary_dist = function(x, cutoff = 0.01){
   return(dist(mat, method = 'binary'))
 }
 
-percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001, cluster = T){
+percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001, cluster = T, main = "Probability of Stronger
+Interaction Score Given No
+True Interaction (Neutral Model)"){
   note = array(NA, dim = dim(mat))
   note[signif(mat, cutoff1)] = '.'
   note[signif(mat, cutoff2)] = '*'
@@ -155,9 +161,7 @@ percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001, cluster = T)
             trace = 'none', density.info = 'density',
             cellnote = note, notecol = 'black',
             keysize = 1.5,
-            main = "Probability of Stronger
-Interaction Score Given No
-True Interaction (Neutral Model)")
+            main = main)
 }
 
 lower_left = function(mat){

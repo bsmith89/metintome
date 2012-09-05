@@ -106,12 +106,33 @@ percentile_heatmap(comparison[1:100, 1:100],
 # reclustering of the heat map where positive and negative 
 # interactions are clustered together.
 
+
+# # Some additional visualizations
 # comparison_signless = abs(comparison - 0.5) + 0.5
 # percentile_heatmap(comparison_signless[1:100, 1:100],
 #                    cutoff1 = 0.005, cutoff2 = 0.001)
 # 
-# neut_rxs = sim_neut_1trial(reps, sample_sizes, obs_rel_abunds)
-# neut_inter_mat = inter_mat_1trial(neut_rxs, method = method)
-# comparison_neutral = percentile(neut_inter_mat, neut_inter_mat_sample)
-# percentile_heatmap(comparison_neutral[1:100, 1:100],
-#                    cutoff1 = 0.005, cutoff2 = 0.001)
+neut_rxs = sim_neut_1trial(reps, sample_sizes, obs_rel_abunds)
+neut_inter_mat = inter_mat_1trial(neut_rxs, method = method)
+comparison_neutral = percentile(neut_inter_mat, neut_inter_mat_sample)
+percentile_heatmap(comparison_neutral[1:100, 1:100],
+                   cutoff1 = 0.005, cutoff2 = 0.001)
+
+
+# Testing the effect of different numbers of replicates on results I
+# predict that fewer replicates (20 instead of 40) will reduce the
+# number of significant interactions found.
+reps = 20
+obs_rxs = data_all[1:reps,]
+new_totals = apply(data_all[1:reps,], 2, sum)
+obs_rxs = obs_rxs[, new_totals > 0]
+method = "spearman"
+reps = dim(obs_rxs)[1]
+sample_sizes = apply(obs_rxs, 1, sum)
+obs_rel_abunds = rel_abund(obs_rxs)
+neut_rxs_sample = sim_neut(1000, reps, sample_sizes, obs_rel_abunds)
+obs_inter_mat = inter_mat_1trial(obs_rxs, method = method)
+neut_inter_mat_sample = inter_mat(neut_rxs_sample, method = method)
+comparison = percentile(obs_inter_mat, neut_inter_mat_sample)
+percentile_heatmap(comparison[1:100, 1:100],
+                   cutoff1 = 0.005, cutoff2 = 0.001)
