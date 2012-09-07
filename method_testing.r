@@ -2,33 +2,33 @@
 # oral samples. Values in data set are relative abundance of the given
 # OTU from a sample size of 1000.
 
-# In this analysis I'm combining all 86 samples, both lung and oral,
-# in order to test the ability of the analysis to identify OTUs which
-# co-occur in the same environment.
-
 source("metintome.r")
 library(VGAM)
 
-data = read.csv("data/both_subsample.csv", header = T, sep = ",")
-data = data[, -c(1:2)]
-data = data * 1000
-totals = apply(data, 2, sum)
-sorted_names = names(sort(totals, decreasing = T))
-data = data[, sorted_names]
-totals = apply(data, 2, sum)
-data_all = data[, which(totals != 0)]
-
-obs_rxs = data_all
-method = "spearman"
-reps = dim(obs_rxs)[1]
-sample_sizes = apply(obs_rxs, 1, sum)
-obs_rel_abunds = rel_abund(obs_rxs)
-neut_rxs_sample = sim_neut(1000, reps, sample_sizes, obs_rel_abunds)
-obs_inter_mat = inter_mat_1trial(obs_rxs, method = method)
-neut_inter_mat_sample = inter_mat(neut_rxs_sample, method = method)
-comparison = percentile(obs_inter_mat, neut_inter_mat_sample)
-percentile_heatmap(comparison[1:100, 1:100],
-                   cutoff1 = 0.005, cutoff2 = 0.001)
+# # In this analysis I'm combining all 86 samples, both lung and oral,
+# # in order to test the ability of the analysis to identify OTUs which
+# # co-occur in the same environment.
+# 
+# data = read.csv("data/both_subsample.csv", header = T, sep = ",")
+# data = data[, -c(1:2)]
+# data = data * 1000
+# totals = apply(data, 2, sum)
+# sorted_names = names(sort(totals, decreasing = T))
+# data = data[, sorted_names]
+# totals = apply(data, 2, sum)
+# data_all = data[, which(totals != 0)]
+# 
+# obs_rxs = data_all
+# method = "spearman"
+# reps = dim(obs_rxs)[1]
+# sample_sizes = apply(obs_rxs, 1, sum)
+# obs_rel_abunds = rel_abund(obs_rxs)
+# neut_rxs_sample = sim_neut(1000, reps, sample_sizes, obs_rel_abunds)
+# obs_inter_mat = inter_mat_1trial(obs_rxs, method = method)
+# neut_inter_mat_sample = inter_mat(neut_rxs_sample, method = method)
+# comparison = percentile(obs_inter_mat, neut_inter_mat_sample)
+# percentile_heatmap(comparison[1:100, 1:100],
+#                    cutoff1 = 0.005, cutoff2 = 0.001)
 
 
 
@@ -43,10 +43,18 @@ percentile_heatmap(comparison[1:100, 1:100],
 # meta-communities through clustering over interactions. Basically,
 # this is a positive environmental interaction control.
 
-abund1 = rpareto(1000, 1, 1.2)
-abund2 = rpareto(1000, 1, 1.2)
-abund3 = rpareto(1000, 1, 1.2)
-abund4 = rpareto(1000, 1, 1.2)
+library(VGAM)
+abund1 = rpareto(1000, 1.3, 1.2)
+abund2 = rpareto(1000, 1.3, 1.2)
+abund3 = rpareto(1000, 1.3, 1.2)
+abund4 = rpareto(1000, 1.3, 1.2)
+
+# plot(abund1, abund2)
+# plot(abund1, abund3)
+# plot(abund1, abund4)
+# plot(abund2, abund3)
+# plot(abund2, abund4)
+# plot(abund3, abund4)
 
 abund1 = namespecies(abund1)
 abund2 = namespecies(abund2)

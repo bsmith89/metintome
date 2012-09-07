@@ -27,9 +27,11 @@ rel_abund = function(rxs_mat){
 sim_neut_1rep = function(sample_size, rel_abunds){
   rel_abunds = namespecies(rel_abunds)
   species = names(rel_abunds)
-  samp = factor(sample(names(rel_abunds), size = sample_size,
-                replace = T, prob = rel_abunds))
-  return(tabulate(samp, nbins = length(rel_abunds)))
+  samp = factor(sample(species, size = sample_size,
+                       replace = T, prob = rel_abunds))
+  counts = tabulate(samp, nbins = length(rel_abunds))
+  names(counts) = species
+  return(counts)
 }
 
 sim_neut_1trial = function(reps, sample_size, rel_abunds){
