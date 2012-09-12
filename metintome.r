@@ -21,30 +21,30 @@ namespecies = function(x, replace = F){
 }
 
 # rxs stands for replicate-by-species (matrix)
-rel_abund = function(rxs_mat){
+rabund = function(rxs_mat){
   col_totals = apply(rxs_mat, c(2), sum)
   grand_total = sum(col_totals)
-  rel_abunds = col_totals / grand_total
-  rel_abunds = namespecies(rel_abunds)
-  return(rel_abunds)
+  rabunds = col_totals / grand_total
+  rabunds = namespecies(rabunds)
+  return(rabunds)
 }
 
-sim_neut_1rep = function(sample_size, rel_abunds){
-  rel_abunds = namespecies(rel_abunds)
-  species = names(rel_abunds)
-  out = array(0, dim = length(rel_abunds),
+sim_neut_1rep = function(sample_size, rabunds){
+  rabunds = namespecies(rabunds)
+  species = names(rabunds)
+  out = array(0, dim = length(rabunds),
               dimnames = list(species = species))
   samp = factor(sample(species, size = sample_size,
-                       replace = T, prob = rel_abunds))
+                       replace = T, prob = rabunds))
   counts = table(samp)
   out[names(counts)] = counts
   return(out)
 }
 
-sim_neut_1trial = function(reps, sample_size, rel_abunds){
-  rel_abunds = namespecies(rel_abunds)
-  num_species = length(rel_abunds)
-  species = names(rel_abunds)
+sim_neut_1trial = function(reps, sample_size, rabunds){
+  rabunds = namespecies(rabunds)
+  num_species = length(rabunds)
+  species = names(rabunds)
   if (length(sample_size) == 1){
     sample_size = array(sample_size, dim = c(reps))
   }
@@ -52,21 +52,21 @@ sim_neut_1trial = function(reps, sample_size, rel_abunds){
                   dimnames = list(rep = 1:reps,
                                   species = species))
   for (rep in 1:reps){
-    out_mat[rep,] = sim_neut_1rep(sample_size[rep], rel_abunds)
+    out_mat[rep,] = sim_neut_1rep(sample_size[rep], rabunds)
   }
   return(out_mat)
 }
 
-sim_neut = function(trials, reps, sample_size, rel_abunds){
-  rel_abunds = namespecies(rel_abunds)
-  species = names(rel_abunds)
+sim_neut = function(trials, reps, sample_size, rabunds){
+  rabunds = namespecies(rabunds)
+  species = names(rabunds)
   num_species = length(species)
   out_mat = array(NA, dim = c(reps, num_species, trials),
                   dimnames = list(rep = 1:reps,
                                   species = species,
                                   trial = 1:trials))
   for (trial in 1:trials){
-    out_mat[,,trial] = sim_neut_1trial(reps, sample_size, rel_abunds)
+    out_mat[,,trial] = sim_neut_1trial(reps, sample_size, rabunds)
   }
   return(out_mat)
 }
@@ -196,9 +196,9 @@ subsample = function(rxs_mat, size){
                   dimnames = dimnames(rxs_mat))
   for (rep in 1:reps){
     counts = rxs_mat[rep,]
-    rel_abunds = counts / sum(counts)
+    rabunds = counts / sum(counts)
     out_mat[rep,] = sim_neut_1rep(sample_size = size,
-                                  rel_abunds = rel_abunds)
+                                  rabunds = rabunds)
   }
   return(out_mat)
 }
