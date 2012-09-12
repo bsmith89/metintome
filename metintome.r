@@ -144,9 +144,7 @@ binary_dist = function(x, cutoff = 0.01){
   return(dist(mat, method = 'binary'))
 }
 
-percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001, cluster = T, main = "Probability of Stronger
-Interaction Score Given No
-True Interaction (Neutral Model)"){
+percentile_heatmap = function(mat, cutoff1 = 0.01, cutoff2 = 0.001, cluster = T, ...){
   note = array(NA, dim = dim(mat))
   note[signif(mat, cutoff1)] = '.'
   note[signif(mat, cutoff2)] = '*'
@@ -170,7 +168,7 @@ True Interaction (Neutral Model)"){
             trace = 'none', density.info = 'density',
             cellnote = note, notecol = 'black',
             keysize = 1.5,
-            main = main)
+            ...)
 }
 
 lower_left = function(mat){
