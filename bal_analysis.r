@@ -14,8 +14,6 @@ totals = apply(data, 2, sum) # This is important, since we've
 # re-arranged the data already.
 data_all = data[, which(totals != 0)]
 
-
-
 # # If I cut out all but the top 20 OTUs
 # data_20 = data[,1:20]
 # obs_rxs20 = data_20
@@ -29,9 +27,6 @@ data_all = data[, which(totals != 0)]
 # comparison20 = percentile(obs_inter_mat20, neut_inter_mat_sample20)
 # percentile_heatmap(comparison20[1:40, 1:40],
 #                    cutoff1 = 0.005, cutoff2 = 0.001)
-
-
-
 
 obs_rxs = data_all
 method = "spearman"
