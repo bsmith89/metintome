@@ -3,6 +3,8 @@
 
 library(gplots)
 library(entropy)
+library(stringr)
+
 
 namespecies = function(x, replace = F){
   if (! is.null(names(x)) && ! replace){
@@ -10,7 +12,10 @@ namespecies = function(x, replace = F){
     return(x)
   }
   else {
-    names(x) = paste("SP", 1:length(x), sep = '')
+    numbers = 1:length(x)
+    len = floor(log10(length(x))) + 1
+    num_strings = str_pad(numbers, len, "left", pad = 0)
+    names(x) = paste("SP", num_strings, sep = '')
     return(x)
   }
 }
@@ -27,11 +32,13 @@ rel_abund = function(rxs_mat){
 sim_neut_1rep = function(sample_size, rel_abunds){
   rel_abunds = namespecies(rel_abunds)
   species = names(rel_abunds)
+  out = array(0, dim = length(rel_abunds),
+              dimnames = list(species = species))
   samp = factor(sample(species, size = sample_size,
                        replace = T, prob = rel_abunds))
-  counts = tabulate(samp, nbins = length(rel_abunds))
-  names(counts) = species
-  return(counts)
+  counts = table(samp)
+  out[names(counts)] = counts
+  return(out)
 }
 
 sim_neut_1trial = function(reps, sample_size, rel_abunds){

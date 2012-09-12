@@ -3,7 +3,7 @@
 # OTU from a sample size of 1000.
 
 source("metintome.r")
-library(VGAM)
+library(VGAM) # for rpareto()
 
 # # In this analysis I'm combining all 86 samples, both lung and oral,
 # # in order to test the ability of the analysis to identify OTUs which
@@ -43,18 +43,14 @@ library(VGAM)
 # meta-communities through clustering over interactions. Basically,
 # this is a positive environmental interaction control.
 
-library(VGAM)
-abund1 = rpareto(1000, 1.3, 1.2)
-abund2 = rpareto(1000, 1.3, 1.2)
-abund3 = rpareto(1000, 1.3, 1.2)
-abund4 = rpareto(1000, 1.3, 1.2)
+location = 1
+shape = 1
+num_species = 500
 
-# plot(abund1, abund2)
-# plot(abund1, abund3)
-# plot(abund1, abund4)
-# plot(abund2, abund3)
-# plot(abund2, abund4)
-# plot(abund3, abund4)
+abund1 = rpareto(num_species, location, shape)
+abund2 = rpareto(num_species, location, shape)
+abund3 = rpareto(num_species, location, shape)
+abund4 = rpareto(num_species, location, shape)
 
 abund1 = namespecies(abund1)
 abund2 = namespecies(abund2)
@@ -73,10 +69,12 @@ obs_reps4 = sim_neut_1trial(10, 1000, rabund4)
 data = rbind(obs_reps1, obs_reps2, obs_reps3, obs_reps4)
 
 totals = apply(data, 2, sum)
-sorted_names = names(sort(totals, decreasing = T))
-data = data[, sorted_names]
-totals = apply(data, 2, sum)
 data_all = data[, which(totals != 0)]
+sort(totals)[c(1, seq(50, 500, 50))]
+
+
+
+
 
 obs_rxs = data_all
 method = "spearman"
@@ -90,4 +88,4 @@ comparison = percentile(obs_inter_mat, neut_inter_mat_sample)
 percentile_heatmap(comparison[1:100, 1:100],
                    cutoff1 = 0.005, cutoff2 = 0.001)
 
-# Why did I not get the expected clustering?
+# I'm now getting much closer to the expected clustering!!!
