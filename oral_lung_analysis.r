@@ -21,7 +21,7 @@ shared_common_species = intersect(common_species_lung,
 both_common_species = union(common_species_lung, common_species_oral)
 
 # Generate Lung Interaction Scores
-obs_lung = data_lung[which(species_totals_lung != 0)]
+obs_lung = data_lung[, which(species_totals_lung != 0)]
 obs_rabund_lung = rabund(obs_lung)
 obs_inter_lung = inter_mat_1trial(obs_lung, method = method)
 reps_lung = dim(obs_lung)[1]
@@ -32,7 +32,7 @@ sim_inter_lung = inter_mat(sims_lung, method = method)
 comp_lung_to_sim = percentile(obs_inter_lung, sim_inter_lung)
 
 # Generate Oral Interaction Scores
-obs_oral = data_oral[which(species_totals_oral != 0)]
+obs_oral = data_oral[, which(species_totals_oral != 0)]
 obs_rabund_oral = rabund(obs_oral)
 obs_inter_oral = inter_mat_1trial(obs_oral, method = method)
 reps_oral = dim(obs_oral)[1]
@@ -83,18 +83,70 @@ signif_oral = pos_signif_oral | neg_signif_oral
   length(shared_common_species))) / 2
 # Number of possible interactions: 741 for 39 OTUs
 
+length(which(pos_signif_lung))
+length(which(pos_signif_oral))
+length(which(neg_signif_lung))
+length(which(neg_signif_oral))
 length(which(signif_lung & signif_oral))
+length(which(signif_lung | signif_oral))
 length(which(signif_lung & ! signif_oral))
-length(which(! signif_lung & signif_oral))
+length(which(signif_oral & ! signif_lung))
 length(which(neg_signif_lung & pos_signif_oral))
 length(which(pos_signif_oral & neg_signif_lung))
 length(which(neg_signif_lung & ! signif_oral))
 length(which(pos_signif_lung & ! signif_oral))
 length(which(neg_signif_oral & ! signif_lung))
 length(which(pos_signif_oral & ! signif_lung))
+# We don't find any swapping between postive and negative correlations
+# in either direction (Good, 'cause how would we explain it?). We do 
+# find a variety of switches between significant and insignificant in 
+# both directions for both environments.  There is clearly, however, a
+# bias towards significance and more negative significance in the
+# lung.
+
 
 # What would a correlation heatmap look like if we are actually
 # getting some replicates from "different" communities?
 
+pareto_location = 1
+pareto_shape = 1
+num_species = 500
+abund1 = rpareto(num_species, pareto_location, pareto_shape)
+abund2 = rpareto(num_species, pareto_location, pareto_shape)
+abund3 = rpareto(num_species, pareto_location, pareto_shape)
+abund4 = rpareto(num_species, pareto_location, pareto_shape)
+abund1 = namespecies(abund1)
+abund2 = namespecies(abund2)
+abund3 = namespecies(abund3)
+abund4 = namespecies(abund4)
+rabund1 = abund1/sum(abund1)
+rabund2 = abund2/sum(abund2)
+rabund3 = abund3/sum(abund3)
+rabund4 = abund4/sum(abund4)
+obs_reps1 = sim_neut_1trial(10, 1000, rabund1)
+obs_reps2 = sim_neut_1trial(10, 1000, rabund2)
+obs_reps3 = sim_neut_1trial(10, 1000, rabund3)
+obs_reps4 = sim_neut_1trial(10, 1000, rabund4)
+data_multi = rbind(obs_reps1, obs_reps2, obs_reps3, obs_reps4)
 
+species_totals_multi = apply(data_multi, 2, sum)
+common_species_multi = names(sort(species_totals_multi,
+                                  decreasing = T))[1:num_top_species]
 
+# Generate "Multi Environment" Interaction Scores
+obs_multi = data_multi[, which(species_totals_multi != 0)]
+obs_rabund_multi = rabund(obs_multi)
+obs_inter_multi = inter_mat_1trial(obs_multi, method = method)
+reps_multi = dim(obs_multi)[1]
+sample_sizes_multi = apply(obs_multi, 1, sum)
+sims_multi = sim_neut(1000, reps_multi,
+                     sample_sizes_multi, obs_rabund_multi)
+sim_inter_multi = inter_mat(sims_multi, method = method)
+comp_multi_to_sim = percentile(obs_inter_multi, sim_inter_multi)
+
+# Correlation percentile heatmaps for common species in "Multi
+# Environment"
+percentile_heatmap(comp_multi_to_sim[common_species_multi,
+                                     common_species_multi],
+                   cutoff1 = 0.005, cutoff2 = 0.001,
+                   main = "Multi, multi common")
