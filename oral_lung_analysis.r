@@ -54,8 +54,8 @@ percentile_heatmap(comp_oral_to_sim[common_species_oral,
                    cutoff1 = 0.005, cutoff2 = 0.001,
                    main = "Oral, oral common")
 
-# Correlation percentile heatmaps for species commonly found in either
-# environment
+# Correlation percentile heatmaps for species commonly found in both
+# environments
 
 percentile_heatmap(comp_lung_to_sim[shared_common_species,
                                     shared_common_species],
@@ -66,6 +66,9 @@ percentile_heatmap(comp_oral_to_sim[shared_common_species,
                                     shared_common_species],
                    cutoff1 = 0.005, cutoff2 = 0.001, cluster = F, 
                    main = "Oral, shared common")
+
+# TODO: Correlation percentile heatmaps for species commonly found in
+# either environment
 
 # What fraction of the interactions which are significant are shared?
 # Change sign?
@@ -187,7 +190,7 @@ sim_inter_both = inter_mat(sims_both, method = method)
 comp_both_to_sim = percentile(obs_inter_both, sim_inter_both)
 percentile_heatmap(comp_both_to_sim[both_common_species,
                                     both_common_species],
-                   cutoff1 = 0.005, cutoff2 = 0.001, cluster = T, 
+                   cutoff1 = 0.005, cutoff2 = 0.001, cluster = F, 
                    main = "Both, union common")
 
 
@@ -221,6 +224,44 @@ sims_tgth[(reps_oral + 1):(reps_oral + reps_lung),,] =
   sims_lung
 sim_inter_tgth = inter_mat(sims_tgth, method = method)
 comp_tgth_to_sim = percentile(obs_inter_both, sim_inter_tgth)
+percentile_heatmap(comp_tgth_to_sim[both_common_species,
+                                    both_common_species],
+                   cutoff1 = 0.005, cutoff2 = 0.001, cluster = F, 
+                   main = "Both, union common")
+# So the heatmap shows that a lot of interactions are significant, by 
+# this metric.  Weird, I was expecting fewer significant interactions 
+# the problem, however, is that correlations become much stronger when
+# we simulate communities based on two separate communities.  Only 
+# OTUs which show up in both environments (Oral and Lung), are found 
+# to *not* be correlated when we simulate in this style.
 
+
+
+# > shared_common_species
+# "Otu0002" "Otu0004" "Otu0053" "Otu0005"
+# "Otu0010" "Otu0009" "Otu0039" "Otu0028" "Otu0056" "Otu0013"
+# "Otu0030" "Otu0003" "Otu0068" "Otu0006" "Otu0051" "Otu0037"
+# "Otu0071" "Otu0060" "Otu0014" "Otu0043" "Otu0046" "Otu0027"
+# "Otu0032" "Otu0020" "Otu0024" "Otu0042" "Otu0012" "Otu0118" 
+# "Otu0022" "Otu0017" "Otu0026" "Otu0059" "Otu0007" "Otu0008"
+# "Otu0223" "Otu0049" "Otu0120" "Otu0062" "Otu0047"
+point = c("Otu0002","Otu0056")
+x = point[1]
+y = point[2]
+obs_inter_both[x,y]
+comp_tgth_to_sim[x,y]
+comp_both_to_sim[x,y]
+plot(density(sim_inter_both[x,y,]), xlim = c(-1, 1))
+points(density(sim_inter_tgth[x,y,]), type = "l", col = "blue")
+arrows(obs_inter_both[x,y], 1, y1 = 0.5)
+
+# Another option would be to combine distributions from simulations
+# over both environments and then calculate the correlation percentile
+# based on those values.
+species = names(species_totals_both[species_totals_both != 0])
+num_species = length(species)
+sims_inter_cmbn = array(NA, dim = c(num_species, num_species, num_trials), dimnames=list(species = species, species = species, trial = 1:num_trials * 2))
+sims_inter_cmbn[species, species, 1:num_trials] = sim_inter_oral[species, species, ]
+sims_inter_cmbn[species, species, num_trials:num_trials * 2] = sim_inter_lung[species, species, ]
 
 
